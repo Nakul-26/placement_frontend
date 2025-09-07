@@ -29,10 +29,10 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             
             {/* Protected Routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
+            <Route path="/dashboard" element={
+              //<ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
+              //</ProtectedRoute>
             } />
             <Route path="/users" element={
               <ProtectedRoute requiredPermission="user.read">

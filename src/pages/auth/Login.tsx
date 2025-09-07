@@ -1,3 +1,4 @@
+// login.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,14 +14,18 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     if (user) {
+      console.log('User already logged in, redirecting to:', from);
       navigate(from, { replace: true });
     }
   }, [user, navigate, from]);
@@ -28,18 +33,32 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const success = await login(email, password);
+
+      console.log('Login success:', success);
       if (success) {
-        navigate(from, { replace: true });
+
+        console.log('Redirecting to dashboard');
+
+
+        navigate('/dashboard');
+
+        //navigate(from, { replace: true });
+      } else {
+        setError('Invalid email or password.');
       }
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
+    setLoading(true);
     window.location.href = api.getGoogleAuthUrl();
   };
 
@@ -62,12 +81,17 @@ const Login: React.FC = () => {
         
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
+                  aria-label="Email address"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
@@ -85,14 +109,22 @@ const Login: React.FC = () => {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  aria-label="Password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 pr-10"
                   required
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm"
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
               </div>
             </div>
           </CardContent>
@@ -128,8 +160,14 @@ const Login: React.FC = () => {
               onClick={handleGoogleLogin}
               disabled={loading}
             >
-              <Chrome className="h-4 w-4 mr-2" />
-              Google
+              {loading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <>
+                  <Chrome className="h-4 w-4 mr-2" />
+                  Google
+                </>
+              )}
             </Button>
             
             <div className="text-center text-sm">
